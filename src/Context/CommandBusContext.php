@@ -2,7 +2,11 @@
 
 namespace Brandfil\ActiveBundle\Context;
 
-use Brandfil\ActiveBundle\CommandBusExpr;
+use Brandfil\ActiveBundle\CommandBusInterface;
+use Brandfil\ActiveBundle\Events\AbstractEvent;
+use Brandfil\ActiveBundle\Events\ServicePostInvokeEvent;
+use Brandfil\ActiveBundle\Events\ServicePreInvokeEvent;
+use Brandfil\ActiveBundle\PropTypes;
 use Brandfil\ActiveBundle\Service\AbstractService;
 use Brandfil\ActiveBundle\Service\ContainerAwareService;
 use Brandfil\ActiveBundle\Exceptions\InvalidPropertyException;
@@ -54,31 +58,44 @@ class CommandBusContext implements CommandBusContextInterface
     }
 
     /**
-     * @param AbstractService $service
-     * @param null $input
-     * @return CommandBusContextInterface
+     * {@inheritdoc}
      */
-    public function handle(AbstractService $service, $input = null): CommandBusContextInterface
+    public function handle(AbstractService $service, $input = null, $ignoreTypes = false): CommandBusContextInterface
     {
         $this->input->setContent($input);
         $service = $service->setInput($this->input);
 
-        $this->checkPropTypes($service->getPropTypes());
+        // $ignoreTypes flag should be set as false (default behaviour) to check prop types
+        $ignoreTypes === false && $this->checkPropTypes($service->getPropTypes());
 
         if($service instanceof ContainerAwareService) {
             $service->setContainer($this->container);
         }
 
+        // Pre Invoke event
+        $this->fireEvents(get_class($service), ServicePreInvokeEvent::class);
+
         $this->output->setBody($service());
+
+        // Post Invoke event
+        $this->fireEvents(get_class($service), ServicePostInvokeEvent::class);
 
         return $this;
     }
 
+    /**
+     * @return OutputInterface
+     */
     public function getOutput(): OutputInterface
     {
         return $this->output;
     }
 
+    /**
+     * @param array $types
+     * @throws InvalidPropertyException
+     * @throws \ReflectionException
+     */
     private function checkPropTypes(array $types): void
     {
         $input = $this->input->getContent();
@@ -93,27 +110,61 @@ class CommandBusContext implements CommandBusContextInterface
             $exception->setValue($value);
             $exception->setDesiredType($desiredType);
 
-            switch(true) {
-                case is_callable($type):
-                    $type($value, $property, $exception);
-                    break;
-                case $type instanceof CommandBusExpr:
-                    if($type->getType() === CommandBusExpr::ONE_OF && !in_array($value, $type->getParams())) {
-                        $exception->setMessage('The property `'.$property.'` must be one of '.join(', ', $type->getParams()).'; passed '.$value.'.');
+            if(is_callable($type)) {
+                $type($value, $property, $exception);
+            } else if(PropTypes::isValidType($type)) {
+                switch (true) {
+                    case $type === PropTypes::ArrayType && !is_array($value):
+                    case $type === PropTypes::StringType && !is_string($value):
+                    case $type === PropTypes::IntegerType && !is_integer($value):
+                    case $type === PropTypes::FloatType && !is_float($value):
+                    case $type === PropTypes::DoubleType && !is_double($value):
+                    case $type === PropTypes::ObjectType && !is_object($value):
+                    case $type === PropTypes::NumericType && !is_numeric($value):
+                        $exception->setMessage('The property `'.$property.'` must be '.$type.' type, '.$desiredType.' given.');
                         throw $exception;
-                    }
-                    break;
-                case $type === 'array' && !is_array($value):
-                case $type === 'string' && !is_string($value):
-                case $type === 'integer' && !is_integer($value):
-                case $type === 'float' && !is_float($value):
-                case $type === 'double' && !is_double($value):
-                case $type === 'object' && !is_object($value):
-                case $type === 'numeric' && !is_numeric($value):
-                case is_object($value) && !($value instanceof $type):
-                    $exception->setMessage('The property `'.$property.'` must be an instance of '.$type.', '.$desiredType.' given.');
-                    throw $exception;
+                }
+            } else if(!($value instanceof $type)) {
+                $exception->setMessage('The property `'.$property.'` must be an instance of '.$type.', '.$desiredType.' given.');
+                throw $exception;
             }
+        }
+    }
+
+    /**
+     * @return CommandBusInterface
+     * @throws \Exception
+     */
+    private function getCommandBus(): CommandBusInterface
+    {
+        if(!($this->container instanceof ContainerInterface)) {
+            throw new \Exception('Could not reach Service Container.');
+        }
+
+        return $this->container->get('brandfil_active.command_bus');
+    }
+
+    /**
+     * @param string $service
+     * @param string $type
+     */
+    private function fireEvents(string $service, string $type)
+    {
+        try {
+            $events = $this->getCommandBus()
+                ->getRegisteredEvents($service)
+                ->filter(function (AbstractEvent $event) use ($type) {
+                    return get_class($event) === $type;
+                });
+
+
+            /** @var AbstractEvent $event */
+            foreach($events as $event) {
+                $e = $event->getEvent();
+                $e($event->getType(), $this->output);
+            }
+        } catch (\Exception $e) {
+
         }
     }
 }

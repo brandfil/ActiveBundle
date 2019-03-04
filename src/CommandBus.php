@@ -2,9 +2,12 @@
 
 namespace Brandfil\ActiveBundle;
 
+use Brandfil\ActiveBundle\Events\AbstractEvent;
 use Brandfil\ActiveBundle\Service\AbstractService;
 use Brandfil\ActiveBundle\Context\CommandBusContext;
 use Brandfil\ActiveBundle\Context\CommandBusContextInterface;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -19,37 +22,66 @@ class CommandBus implements CommandBusInterface
     private $container;
 
     /**
+     * @var array
+     */
+    private $events = [];
+
+
+    /**
      * CommandBus constructor.
      * @param ContainerInterface $container
      */
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
+        $this->events = new ArrayCollection();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function handle(AbstractService $service, $input = null): CommandBusContextInterface
+    public function handle(AbstractService $service, $input = null, $ignoreTypes = false): CommandBusContextInterface
     {
         $context = new CommandBusContext;
         $context->setContainer($this->container);
-        return $context->handle($service, $input);
+        return $context->handle($service, $input, $ignoreTypes);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function addEventListener(string $class, callable $event): void
+    public function addEventListener(AbstractEvent $event): void
     {
-        // TODO: Implement addEventListener() method.
+        $this->events->add($event);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function removeEventListener(string $class): void
+    public function removeEventListener(AbstractEvent $event): void
     {
-        // TODO: Implement removeEventListener() method.
+        if($this->events->contains($event)) {
+            $this->events->removeElement($event);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getRegisteredEvents(string $service = null): Collection
+    {
+        $events = $this->events;
+        if($service !== null) {
+            $events = $events->filter(function (AbstractEvent $event) use ($service) {
+                return $event->getService() === $service;
+            });
+        }
+
+        return $events;
+    }
+
+    public function removeAllEventListeners(): void
+    {
+        $this->events->clear();
     }
 }

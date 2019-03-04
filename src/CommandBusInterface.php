@@ -2,8 +2,10 @@
 
 namespace Brandfil\ActiveBundle;
 
+use Brandfil\ActiveBundle\Events\AbstractEvent;
 use Brandfil\ActiveBundle\Service\AbstractService;
 use Brandfil\ActiveBundle\Context\CommandBusContextInterface;
+use Doctrine\Common\Collections\Collection;
 
 /**
  * Interface CommandBusInterface
@@ -14,18 +16,26 @@ interface CommandBusInterface
     /**
      * @param AbstractService $service
      * @param null $input
+     * @param bool $ignoreTypes The input prop types must not be valid
      * @return CommandBusContextInterface
      */
-    public function handle(AbstractService $service, $input = null): CommandBusContextInterface;
+    public function handle(AbstractService $service, $input = null, $ignoreTypes = false): CommandBusContextInterface;
 
     /**
-     * @param string $class
-     * @param callable $event
+     * @param AbstractEvent $event
      */
-    public function addEventListener(string $class, callable $event): void;
+    public function addEventListener(AbstractEvent $event): void;
 
     /**
-     * @param string $class
+     * @param AbstractEvent $event
      */
-    public function removeEventListener(string $class): void;
+    public function removeEventListener(AbstractEvent $event): void;
+
+    public function removeAllEventListeners(): void;
+
+    /**
+     * @param string|null $service
+     * @return Collection
+     */
+    public function getRegisteredEvents(string $service = null): Collection;
 }

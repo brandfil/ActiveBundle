@@ -21,9 +21,10 @@ interface CommandBusContextInterface
     /**
      * @param AbstractService $service
      * @param null $input
+     * @param bool $ignoreTypes The input prop types must not be valid
      * @return CommandBusContextInterface
      */
-    public function handle(AbstractService $service, $input = null): CommandBusContextInterface;
+    public function handle(AbstractService $service, $input = null, $ignoreTypes = false): CommandBusContextInterface;
 
     /**
      * @return OutputInterface
