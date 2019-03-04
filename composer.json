@@ -1,0 +1,16 @@
+{
+    "name": "brandfil/active-bundle",
+    "description": "Simple command bus to separate business logic",
+    "type": "symfony-bundle",
+    "require": {
+        "symfony/symfony": "3.4"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Piotr Miloszewicz",
+            "email": "peter@brandfil.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
