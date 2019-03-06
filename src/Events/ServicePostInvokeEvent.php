@@ -8,5 +8,5 @@ namespace Brandfil\ActiveBundle\Events;
  */
 final class ServicePostInvokeEvent extends AbstractEvent
 {
-    protected $type = 'service_pre_invoke';
+    protected $type = 'service_post_invoke';
 }
