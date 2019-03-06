@@ -3,7 +3,8 @@
     "description": "Simple command bus to separate business logic",
     "type": "symfony-bundle",
     "require": {
-        "symfony/symfony": "3.4"
+        "php": "^7.2",
+        "symfony/config": "^3.4|^4.1.1"
     },
     "license": "MIT",
     "authors": [
