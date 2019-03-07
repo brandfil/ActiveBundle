@@ -65,20 +65,21 @@ class CommandBusContext implements CommandBusContextInterface
         $this->input->setContent($input);
         $service = $service->setInput($this->input);
 
-        // $ignoreTypes flag should be set as false (default behaviour) to check prop types
-        $ignoreTypes === false && $this->checkPropTypes($service->getPropTypes());
-
         if($service instanceof ContainerAwareService) {
             $service->setContainer($this->container);
         }
 
         // Pre Invoke event
-        $this->fireEvents(get_class($service), ServicePreInvokeEvent::class);
+        $this->fireEvent(get_class($service), ServicePreInvokeEvent::class);
 
+        // $ignoreTypes flag should be set as false (default behaviour) to check prop types
+        $ignoreTypes === false && $this->checkPropTypes($service->getPropTypes());
+
+        // invoke service and set output
         $this->output->setBody($service());
 
         // Post Invoke event
-        $this->fireEvents(get_class($service), ServicePostInvokeEvent::class);
+        $this->fireEvent(get_class($service), ServicePostInvokeEvent::class);
 
         return $this;
     }
@@ -148,7 +149,7 @@ class CommandBusContext implements CommandBusContextInterface
      * @param string $service
      * @param string $type
      */
-    private function fireEvents(string $service, string $type)
+    private function fireEvent(string $service, string $type)
     {
         try {
             $events = $this->getCommandBus()
@@ -157,11 +158,18 @@ class CommandBusContext implements CommandBusContextInterface
                     return get_class($event) === $type;
                 });
 
-
             /** @var AbstractEvent $event */
             foreach($events as $event) {
                 $e = $event->getEvent();
-                $e($event->getType(), $this->output);
+                switch($type) {
+                    case ServicePreInvokeEvent::class:
+                        $e($event->getType(), $this->input);
+                        break;
+
+                    case ServicePostInvokeEvent::class:
+                        $e($event->getType(), $this->output);
+                        break;
+                }
             }
         } catch (\Exception $e) {
 

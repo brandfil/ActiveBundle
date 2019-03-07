@@ -13,5 +13,8 @@
             "email": "peter@brandfil.com"
         }
     ],
+    "autoload": {
+      "psr-4": { "Brandfil\\ActiveBundle\\": "src/" }
+    },
     "minimum-stability": "dev"
 }
