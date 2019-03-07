@@ -2,6 +2,7 @@
 
 namespace Brandfil\ActiveBundle\Context;
 
+use Brandfil\ActiveBundle\CommandBusExpr;
 use Brandfil\ActiveBundle\CommandBusInterface;
 use Brandfil\ActiveBundle\Events\AbstractEvent;
 use Brandfil\ActiveBundle\Events\ServicePostInvokeEvent;
@@ -113,6 +114,13 @@ class CommandBusContext implements CommandBusContextInterface
 
             if(is_callable($type)) {
                 $type($value, $property, $exception);
+            } else if($type instanceof CommandBusExpr) {
+                switch(true) {
+                    // Check if given value belongs to the collection
+                    case $type->getType() === CommandBusExpr::ONE_OF && !in_array($value, $type->getParams()):
+                        $exception->setMessage('The property `'.$property.'` must be one of '.join(', ', $type->getParams()).'; passed '.$value.'.');
+                        throw $exception;
+                }
             } else if(is_string($type) && PropTypes::isValidType($type)) {
                 switch (true) {
                     case $type === PropTypes::ArrayType && !is_array($value):
