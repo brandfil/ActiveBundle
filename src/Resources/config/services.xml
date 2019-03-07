@@ -6,6 +6,7 @@
 
     <services>
         <service id="Brandfil\ActiveBundle\CommandBus" public="true" autowire="true"/>
+        <service id="Brandfil\ActiveBundle\CommandBusInterface" alias="Brandfil\ActiveBundle\CommandBus" public="true"/>
         <service id="brandfil_active.command_bus" alias="Brandfil\ActiveBundle\CommandBus" public="true"/>
     </services>
 </container>
