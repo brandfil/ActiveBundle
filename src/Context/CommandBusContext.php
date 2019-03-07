@@ -16,6 +16,7 @@ use Brandfil\ActiveBundle\Input\InputInterface;
 use Brandfil\ActiveBundle\Output\Output;
 use Brandfil\ActiveBundle\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class CommandBusContext
@@ -63,6 +64,10 @@ class CommandBusContext implements CommandBusContextInterface
      */
     public function handle(AbstractService $service, $input = null, $ignoreTypes = false): CommandBusContextInterface
     {
+        if($input instanceof Request) {
+            $input = $input->request->all();
+        }
+
         $this->input->setContent($input);
         $service = $service->setInput($this->input);
 
