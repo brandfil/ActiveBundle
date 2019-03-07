@@ -113,7 +113,7 @@ class CommandBusContext implements CommandBusContextInterface
 
             if(is_callable($type)) {
                 $type($value, $property, $exception);
-            } else if(PropTypes::isValidType($type)) {
+            } else if(is_string($type) && PropTypes::isValidType($type)) {
                 switch (true) {
                     case $type === PropTypes::ArrayType && !is_array($value):
                     case $type === PropTypes::StringType && !is_string($value):
