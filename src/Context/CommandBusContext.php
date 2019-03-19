@@ -68,12 +68,12 @@ class CommandBusContext implements CommandBusContextInterface
             $input = $input->request->all();
         }
 
-        $this->input->setContent($input);
-        $service = $service->setInput($this->input);
-
         if($service instanceof ContainerAwareService) {
             $service->setContainer($this->container);
         }
+
+        $this->input->setContent($input);
+        $service = $service->setInput($this->input);
 
         // Pre Invoke event
         $this->fireEvent(get_class($service), ServicePreInvokeEvent::class);
