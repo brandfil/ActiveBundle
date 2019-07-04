@@ -44,7 +44,7 @@ class CommandBus implements CommandBusInterface
     {
         $context = new CommandBusContext;
         $context->setContainer($this->container);
-        return $context->handle($service, $input, $ignoreTypes);
+        return $context->handle($service, $input, $ignoreTypes, clone $this);
     }
 
     /**

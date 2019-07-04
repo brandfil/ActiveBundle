@@ -2,6 +2,7 @@
 
 namespace Brandfil\ActiveBundle\Service;
 
+use Brandfil\ActiveBundle\CommandBusInterface;
 use Brandfil\ActiveBundle\Input\InputInterface;
 
 abstract class AbstractService
@@ -10,6 +11,11 @@ abstract class AbstractService
      * @var InputInterface
      */
     private $input;
+
+    /**
+     * @var CommandBusInterface
+     */
+    private $commandBus;
 
     /**
      * @return InputInterface
@@ -30,6 +36,24 @@ abstract class AbstractService
         }
 
         $this->input = $input;
+        return $this;
+    }
+
+    /**
+     * @return CommandBusInterface
+     */
+    public function getCommandBus(): CommandBusInterface
+    {
+        return $this->commandBus;
+    }
+
+    /**
+     * @param CommandBusInterface $commandBus
+     * @return AbstractService
+     */
+    public function setCommandBus(CommandBusInterface $commandBus): AbstractService
+    {
+        $this->commandBus = $commandBus;
         return $this;
     }
 

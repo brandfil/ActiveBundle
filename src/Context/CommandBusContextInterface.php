@@ -2,6 +2,7 @@
 
 namespace Brandfil\ActiveBundle\Context;
 
+use Brandfil\ActiveBundle\CommandBusInterface;
 use Brandfil\ActiveBundle\Service\AbstractService;
 use Brandfil\ActiveBundle\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -21,10 +22,11 @@ interface CommandBusContextInterface
     /**
      * @param AbstractService $service
      * @param null $input
-     * @param bool $ignoreTypes The input prop types must not be valid
+     * @param bool $ignoreTypes
+     * @param CommandBusInterface $commandBus
      * @return CommandBusContextInterface
      */
-    public function handle(AbstractService $service, $input = null, $ignoreTypes = false): CommandBusContextInterface;
+    public function handle(AbstractService $service, $input = null, $ignoreTypes = false, CommandBusInterface $commandBus): CommandBusContextInterface;
 
     /**
      * @return OutputInterface

@@ -62,8 +62,10 @@ class CommandBusContext implements CommandBusContextInterface
     /**
      * {@inheritdoc}
      */
-    public function handle(AbstractService $service, $input = null, $ignoreTypes = false): CommandBusContextInterface
+    public function handle(AbstractService $service, $input = null, $ignoreTypes = false, CommandBusInterface $commandBus): CommandBusContextInterface
     {
+        $service->setCommandBus($commandBus);
+
         if($input instanceof Request) {
             $input = $input->request->all();
         }
