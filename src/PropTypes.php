@@ -15,7 +15,7 @@ abstract class PropTypes
     public const DoubleType         = 'double';
     public const ObjectType         = 'object';
     public const NumericType        = 'numeric';
-
+    public const AnyType            = 'any';
 
     /**
      * @return array
